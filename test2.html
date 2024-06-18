@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communication System Calculator</title>
+    <link rel="stylesheet" href="wss.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://cdn-icons-png.freepik.com/512/8468/8468896.png?ga=GA1.1.307243719.1718747295" alt="Wireless Icon" class="large-icon">
+            <h1>Communication <span class="colorful-text">System Calculator</span></h1>
+        </div>
+        <form id="calculator-form">
+            <!-- Sampler, Quantizer, Encoder Section -->
+            <section class="card">
+                <h2>Sampler, Quantizer, Encoder</h2>
+                <div class="input-group">
+                    <label for="sample-rate">Sample Rate (Hz):</label>
+                    <input type="number" id="sample-rate" required>
+                </div>
+                <div class="input-group">
+                    <label for="bits-per-sample">Bits per Sample:</label>
+                    <input type="number" id="bits-per-sample" required>
+                </div>
+                <div class="input-group">
+                    <label for="source-encoder-rate">Source Encoder Rate:</label>
+                    <input type="number" id="source-encoder-rate" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateSamplerQuantizer()">Calculate</button>
+            </section>
+            
+            <!-- OFDM Section -->
+            <section class="card">
+                <h2>OFDM Parameters</h2>
+                <div class="input-group">
+                    <label for="resource-elements">Number of Resource Elements:</label>
+                    <input type="number" id="resource-elements" required>
+                </div>
+                <div class="input-group">
+                    <label for="ofdm-symbol">OFDM Symbol Rate:</label>
+                    <input type="number" id="ofdm-symbol" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateOFDMParameters()">Calculate</button>
+            </section>
+
+            <!-- Power Calculation Section -->
+            <section class="card">
+                <h2>Power Calculation</h2>
+                <div class="input-group">
+                    <label for="transmit-power">Transmit Power (dBm):</label>
+                    <input type="number" id="transmit-power" required>
+                </div>
+                <div class="input-group">
+                    <label for="receive-gain">Receive Gain (dB):</label>
+                    <input type="number" id="receive-gain" required>
+                </div>
+                <button type="button" class="btn" onclick="calculatePower()">Calculate</button>
+            </section>
+            
+            <!-- Throughput Section -->
+            <section class="card">
+                <h2>Throughput Calculation</h2>
+                <div class="input-group">
+                    <label for="multiple-access-techniques">Multiple Access Techniques:</label>
+                    <input type="number" id="multiple-access-techniques" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateThroughput()">Calculate</button>
+            </section>
+            
+            <!-- Cellular System Design Section -->
+            <section class="card">
+                <h2>Cellular System Design</h2>
+                <div class="input-group">
+                    <label for="cell-radius">Cell Radius (km):</label>
+                    <input type="number" id="cell-radius" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateCellularSystem()">Calculate</button>
+            </section>
+        </form>
+        
+        <!-- Result Display Section -->
+        <div id="results">
+            <h2>Results</h2>
+            <div id="sampler-quantizer-result"></div>
+            <div id="ofdm-result"></div>
+            <div id="power-result"></div>
+            <div id="throughput-result"></div>
+            <div id="cellular-system-result"></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
