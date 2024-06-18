@@ -9,7 +9,6 @@ body {
     align-items: center;
     min-height: 100vh;
     font-weight: bold;
-
 }
 
 .container {
@@ -31,8 +30,6 @@ body {
     height: 120px;
     margin-bottom: 15px;
 }
-
-
 
 h1 {
     font-size: 2.5rem;
@@ -73,14 +70,15 @@ form {
     box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
 }
 
-.label {
-    font-weight: bold;
-    color: #5e5c5c;
-}
-
 .input-group {
     display: flex;
     flex-direction: column;
+    margin-bottom: 16px; /* Increased margin-bottom to create more space */
+}
+
+.input-group label {
+    font-weight: bold;
+    color: #5e5c5c;
 }
 
 input {
