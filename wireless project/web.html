@@ -68,8 +68,7 @@
                 </div>
                 <button type="button" class="btn" onclick="calculateOFDMParameters()">Calculate</button>
             </section>
-
-          <!-- Power Calculation Section -->
+             <!-- Power Calculation Section -->
           <section class="card">
             <h2>Power Calculation</h2>
             <div class="input-group">
@@ -89,7 +88,7 @@
                 <input type="number" id="transmit-antenna-gain" required>
                 <select id="transmit-antenna-gain-unit">
                     <option value="no-unit">No Unit</option>
-                    <option value="dbi">dBi</option>
+                    <option value="db">dB</option>
                 </select>
             </div>
             <div class="input-group">
@@ -97,7 +96,7 @@
                 <input type="number" id="receive-antenna-gain" required>
                 <select id="receive-antenna-gain-unit">
                     <option value="no-unit">No Unit</option>
-                    <option value="dbi">dBi</option>
+                    <option value="db">dB</option>
                 </select>
             </div>
             <div class="input-group">
@@ -163,15 +162,73 @@
             <button type="button" class="btn" onclick="calculatePower()">Calculate</button>
         </section>
             
-            <!-- Throughput Section -->
+         <!-- Throughput Section -->
+            <!-- Throughput Calculation Section -->
             <section class="card">
                 <h2>Throughput Calculation</h2>
                 <div class="input-group">
-                    <label for="multiple-access-techniques">Multiple Access Techniques:</label>
-                    <input type="number" id="multiple-access-techniques" required>
+                    <label for="mat-selection">Multiple Access Technique:</label>
+                    <select id="mat-selection" onchange="toggleMATParameters()">
+                        <option value="unslotted-nonpersistent">Unslotted Nonpersistent CSMA</option>
+                        <option value="slotted-nonpersistent">Slotted Nonpersistent CSMA</option>
+                        <option value="unslotted-1-persistent">Unslotted 1-Persistent CSMA</option>
+                        <option value="slotted-1-persistent">Slotted 1-Persistent CSMA</option>
+                    </select>
+                </div>
+                <div id="mat-parameters">
+                    <!-- Parameters for each MAT will be dynamically shown based on selection -->
+                    <div id="unslotted-nonpersistent">
+                        <div class="input-group">
+                            <label for="traffic-load-unslotted">Traffic Load:</label>
+                            <input type="number" id="traffic-load-unslotted" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="normalized-propagation-delay-unslotted">Normalized Propagation Delay:</label>
+                            <input type="number" id="normalized-propagation-delay-unslotted" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="packet-transmission-time-unslotted">Packet Transmission Time:</label>
+                            <input type="number" id="packet-transmission-time-unslotted" required>
+                        </div>
+                    </div>
+                    <div id="slotted-nonpersistent">
+                        <div class="input-group">
+                            <label for="traffic-load-slotted">Traffic Load:</label>
+                            <input type="number" id="traffic-load-slotted" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="normalized-propagation-delay-slotted">Normalized Propagation Delay:</label>
+                            <input type="number" id="normalized-propagation-delay-slotted" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="packet-transmission-time-slotted">Packet Transmission Time:</label>
+                            <input type="number" id="packet-transmission-time-slotted" required>
+                        </div>
+                    </div>
+                    <div id="unslotted-1-persistent">
+                        <div class="input-group">
+                            <label for="traffic-load-1-persistent">Traffic Load:</label>
+                            <input type="number" id="traffic-load-1-persistent" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="normalized-propagation-delay-1-persistent">Normalized Propagation Delay:</label>
+                            <input type="number" id="normalized-propagation-delay-1-persistent" required>
+                        </div>
+                    </div>
+                    <div id="slotted-1-persistent">
+                        <div class="input-group">
+                            <label for="traffic-load-slotted-1-persistent">Traffic Load:</label>
+                            <input type="number" id="traffic-load-slotted-1-persistent" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="normalized-propagation-delay-slotted-1-persistent">Normalized Propagation Delay:</label>
+                            <input type="number" id="normalized-propagation-delay-slotted-1-persistent" required>
+                        </div>
+                    </div>
                 </div>
                 <button type="button" class="btn" onclick="calculateThroughput()">Calculate</button>
             </section>
+
             
             <!-- Cellular System Design Section -->
             <section class="card">
@@ -184,20 +241,16 @@
             </section>
         </form>
         
-        <!-- Result Display Section -->
-        <div id="results">
-            <h2>Results</h2>
-            <div id="sampler-quantizer-result"></div>
-        <!-- <div id="ofdm-result"></div>
-        <div id="power-result"></div>
-        <div id="throughput-result"></div>
-        <div id="cellular-system-result"></div>
-            <div id="sampler-quantizer-result"></div> -->
-            <div id="ofdm-result"></div>
-            <div id="power-result"></div>
-            <div id="throughput-result"></div>
-            <div id="cellular-system-result"></div>
-        </div>
+
+            <!-- Result Display Section -->
+            <div id="results">
+                <h2>Results</h2>
+                <div id="sampler-quantizer-result"></div>
+                <div id="ofdm-result"></div>
+                <div id="throughput-result"></div>
+
+            </div>
+        </form>
     </div>
     
     <script src="script.js"></script>
