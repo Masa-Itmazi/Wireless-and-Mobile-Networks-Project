@@ -1,3 +1,5 @@
+// Define functions globally
+
 // Function to calculate Sampler, Quantizer, Source Encoder, Channel Encoder, and Interleaver
 function calculateParameters() {
     // Fetch input values
@@ -36,13 +38,13 @@ function calculateOFDMParameters() {
     var bw = parseFloat(document.getElementById('ofdm-bandwidth').value.trim());
     var df = parseFloat(document.getElementById('subcarrier-spacing').value.trim());
     var N = parseInt(document.getElementById('number-of-symbols').value.trim());
-    var T_rb = parseFloat(document.getElementById('resource-block-duration').value.trim()) / 1000; // Convert ms to s
+    var T_rb = parseFloat(document.getElementById('resource-block-duration').value.trim()) / 1000; // Convert ms to s;
     var B = parseInt(document.getElementById('modulated-bits').value.trim());
     var n = parseInt(document.getElementById('number-of-parallel-blocks').value.trim());
 
     // Perform calculations
-    var bitsPerResourceElement = Math.log2(B); // assuming 1024-QAM as per your example
-    var bitsPerOFDMSymbol = (bw / df) * bitsPerResourceElement;
+    var bitsPerResourceElement =  Math.log2(B); // assuming 1024-QAM as per your example
+    var bitsPerOFDMSymbol = (bw/df) * bitsPerResourceElement;
     var bitsPerResourceBlock = bitsPerOFDMSymbol * N;
     var maxTransmissionRate = (n * bitsPerResourceBlock) / T_rb;
 
@@ -64,30 +66,37 @@ function calculateOFDMParameters() {
 // Function to calculate Throughput
 function calculateThroughput() {
     var selection = document.getElementById('csma-selection').value;
-    var g = parseFloat(document.getElementById('g').value.trim());
-    var frameSize = parseFloat(document.getElementById('frame-size').value.trim());
-    var T = parseFloat(document.getElementById('T').value.trim());
+    var g_fps = parseFloat(document.getElementById('g').value.trim());
+    var bw_bps = parseInt(document.getElementById('data-transmission-bandwidth').value.trim());
+    var frameSize_bits = parseFloat(document.getElementById('frame-size').value.trim());
+    var T_microsec = parseFloat(document.getElementById('T').value.trim());
+
+
+    // Convert units
+    var g_kfps = g_fps / 1000; // frames per second to kiloframes per second
+    var bw_mbps = bw_bps / 1e6; // bits per second to megabits per second
+    var frameSize_kbit = frameSize_bits / 1000; // bits to kilobits
+    var T_sec = T_microsec / 1e6; // microseconds to seconds
 
     // Calculate Tb, Tframe, G, alpha
-    var Tb = 1 / frameSize;
-    var Tframe = frameSize * Tb;
-    var G = g * Tframe;
-    var alpha = T / Tframe;
+    var Tb = 1 / bw_mbps; // inverse of bandwidth in Mbps
+    var Tframe = frameSize_kbit * Tb; // frame size in kbit * Tb
+    var G = g_kfps * Tframe; // g in kiloframes * Tframe
+    var alpha = T_sec / Tframe; // T in seconds / Tframe
 
     var S_th;
-    var throughputResultElement = document.getElementById('throughput-result');
 
     switch (selection) {
         case 'unslotted-nonpersistent':
-            S_th = G * Math.exp(-2 * alpha * T) * (G * (1 + 2 * alpha) + Math.exp(-alpha * G));
+            S_th = G * Math.exp(-2 * alpha * T_sec) * (G * (1 + 2 * alpha) + Math.exp(-alpha * G));
             break;
         case 'slotted-nonpersistent':
-            S_th = alpha * G * Math.exp(-2 * alpha * T) * (1 - Math.exp(-alpha * G) + alpha);
+            S_th = alpha * G * Math.exp(-2 * alpha * T_sec) * (1 - Math.exp(-alpha * G) + alpha);
             break;
-        case 'unslotted-1persistent':
+        case 'unslotted-1-persistent':
             S_th = G * (1 + G + alpha * G * (1 + G + alpha * G * 2)) * Math.exp(-G * (1 + 2 * alpha)) - (1 - Math.exp(-alpha * G)) + (1 + alpha * G) * Math.exp(-G * (1 + alpha));
             break;
-        case 'slotted-1persistent':
+        case 'slotted-1-persistent':
             S_th = G * (1 + alpha - Math.exp(-alpha * G)) * Math.exp(-G * (1 + alpha)) * (1 + alpha) * (1 - Math.exp(-alpha * G)) + alpha * Math.exp(-G * (1 + alpha));
             break;
         default:
@@ -96,8 +105,22 @@ function calculateThroughput() {
             break;
     }
 
+
     // Display results
-    throughputResultElement.innerHTML = `<p>Throughput: ${S_th.toFixed(2)} bps</p>`;
+    console.log(S_th)
+    // Display results
+   // Display results
+   var throughputResultElement = document.getElementById('throughput-result');
+   if (throughputResultElement) {
+       // Adjust display logic for small non-zero values
+       if (Math.abs(S_th) < 0.01) {
+           throughputResultElement.innerHTML = `<p>Throughput: < 0.01 bps</p>`;
+       } else {
+           throughputResultElement.innerHTML = `<p>Throughput: ${S_th.toFixed(2)} bps</p>`;
+       }
+   } else {
+       console.error('Element with ID "throughput-result" not found.');
+   }
 }
 
 // Function to toggle MAT Parameters
@@ -118,7 +141,9 @@ function toggleMATParameters() {
     otherOptions.forEach(option => option.style.display = 'none');
 }
 
+// Attach event listeners after DOM is fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+
     // Attach calculateParameters function to the Calculate button click event
     var calculateButton = document.querySelector('#calculator-form button[type="button"]');
     if (calculateButton) {
@@ -150,4 +175,5 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('MAT selection dropdown not found.');
     }
+
 });
