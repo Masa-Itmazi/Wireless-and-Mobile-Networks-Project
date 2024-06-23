@@ -106,7 +106,7 @@ function calculateCellularSystem() {
     const users = parseFloat(document.getElementById("number-of-users").value);
     const callsPerDay = parseFloat(document.getElementById("calls-per-day").value);
     const callDuration = parseFloat(document.getElementById("call-duration").value);
-    const callDropProbability = parseFloat(document.getElementById("call-drop-probability").value) / 100;
+    const callDropProbability = parseFloat(document.getElementById("call-drop-probability").value);
     const sir = parseFloat(document.getElementById("sir").value);
     const referenceDistance = parseFloat(document.getElementById("reference-distance").value);
     const powerAtReference = parseFloat(document.getElementById("power-reference-distance").value);
