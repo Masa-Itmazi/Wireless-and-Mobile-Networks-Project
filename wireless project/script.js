@@ -1,35 +1,129 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     // Function to calculate Sampler, Quantizer, Source Encoder, Channel Encoder, and Interleaver
     function calculateParameters() {
-        // Fetch input values
         var bandwidth = parseFloat(document.getElementById('bandwidth').value.trim());
         var numberOfBits = parseInt(document.getElementById('number-of-bits').value.trim());
         var compressionRate = parseFloat(document.getElementById('compression-rate').value.trim());
         var channelEncoderRate = parseFloat(document.getElementById('channel-encoder-rate').value.trim());
         var interleaverBits = parseFloat(document.getElementById('interleaver-bits').value.trim());
+        var numberOfLevels = Math.pow(2, numberOfBits);
 
-        // Perform calculations
         var sampler = 2 * bandwidth;
-        var quantizer = numberOfBits * sampler;
-        var sourceEncoder = compressionRate * quantizer;
-        var channelEncoder = channelEncoderRate * sourceEncoder;
-        var interleaver = interleaverBits * channelEncoder;
+        var quantizer = numberOfLevels;
+        var sourceEncoder = compressionRate * (numberOfBits * sampler);
+        var channelEncoder =   sourceEncoder/channelEncoderRate ;
+        var interleaver = 1 * channelEncoder;
 
-        // Display results
-        var resultElement = document.getElementById('sampler-quantizer-result'); // Assuming you want to display in this element
+        var resultElement = document.getElementById('sampler-quantizer-result');
         if (resultElement) {
             resultElement.innerHTML = `
                 <h3>Calculated Parameters:</h3>
-                <p>Sampler: ${sampler.toFixed(2)}</p>
+                <p>Sampler: ${sampler.toFixed(2)}Hz</p>
                 <p>Quantizer: ${quantizer.toFixed(2)}</p>
-                <p>Source Encoder: ${sourceEncoder.toFixed(2)}</p>
-                <p>Channel Encoder: ${channelEncoder.toFixed(2)}</p>
-                <p>Interleaver: ${interleaver.toFixed(2)}</p>
+                <p>Source Encoder: ${sourceEncoder.toFixed(2)}bps</p>
+                <p>Channel Encoder: ${channelEncoder.toFixed(2)}bps</p>
+                <p>Interleaver: ${interleaver.toFixed(2)}bps</p>
             `;
         } else {
             console.error('Element with ID "sampler-quantizer-result" not found.');
         }
     }
+
+    // Function to calculate OFDM Parameters
+    function calculateOFDMParameters() {
+        var bw = parseFloat(document.getElementById('ofdm-bandwidth').value.trim());
+        var df = parseFloat(document.getElementById('subcarrier-spacing').value.trim());
+        var N = parseInt(document.getElementById('number-of-symbols').value.trim());
+        var T_rb = parseFloat(document.getElementById('resource-block-duration').value.trim()) / 1000;
+        var B = parseInt(document.getElementById('modulated-bits').value.trim());
+        var n = parseInt(document.getElementById('number-of-parallel-blocks').value.trim());
+
+        var bitsPerResourceElement = Math.log2(B);
+        var bitsPerOFDMSymbol = (bw / df) * bitsPerResourceElement;
+        var bitsPerResourceBlock = bitsPerOFDMSymbol * N;
+        var maxTransmissionRate = (n * bitsPerResourceBlock) / T_rb;
+
+        var resultElement = document.getElementById('ofdm-result');
+        if (resultElement) {
+            resultElement.innerHTML = `
+                <h3>OFDM Calculated Parameters:</h3>
+                <p>Bits Per Resource Element: ${bitsPerResourceElement.toFixed(2)}</p>
+                <p>Bits Per OFDM Symbol: ${bitsPerOFDMSymbol.toFixed(2)}</p>
+                <p>Bits Per Resource Block: ${bitsPerResourceBlock.toFixed(2)}</p>
+                <p>Max Transmission Rate: ${maxTransmissionRate.toFixed(2)}bps</p>
+            `;
+        } else {
+            console.error('Element with ID "ofdm-result" not found.');
+        }
+    }
+
+    // Function to calculate Throughput
+    function calculateThroughput() {
+        var selection = document.getElementById('csma-selection').value;
+        var g_kfps = parseFloat(document.getElementById('g').value.trim()); // in kfps
+        var bw_mbps = parseInt(document.getElementById('data-transmission-bandwidth').value.trim()); // in Mbps
+        var frameSize_kbit = parseFloat(document.getElementById('frame-size').value.trim()); // in kbit
+        var T_microsec = parseFloat(document.getElementById('T').value.trim()); // in microsec
+
+        // Convert units
+        var g_fps = g_kfps * 1000; // kiloframes per second to frames per second
+        var bw_bps = bw_mbps * 1e6; // megabits per second to bits per second
+        var frameSize_bits = frameSize_kbit * 1000; // kilobits to bits
+        var T_sec = T_microsec / 1e6; // microseconds to seconds
+
+        // Calculate Tb, Tframe, G, alpha
+        var Tb = 1 / bw_bps; // inverse of bandwidth in bps
+        var Tframe = frameSize_bits * Tb; // frame size in bits * Tb
+        var G = g_fps * Tframe; // g in frames * Tframe
+        var alpha = T_sec / Tframe; // T in seconds / Tframe
+
+        // Print the values for debugging
+        console.log('g_kfps:', g_kfps);
+        console.log('bw_mbps:', bw_mbps);
+        console.log('frameSize_kbit:', frameSize_kbit);
+        console.log('T_microsec:', T_microsec);
+        console.log('T_sec:', T_sec);
+        console.log('Tb:', Tb);
+        console.log('Tframe:', Tframe);
+        console.log('G:', G);
+        console.log('alpha:', alpha);
+
+        var S_th;
+
+        switch (selection) {
+            case 'unslotted-nonpersistent':
+                S_th = G * Math.exp(-2 * alpha * T_sec) / (G * (1 + 2 * alpha) + Math.exp(-alpha * G));
+                break;
+            case 'slotted-nonpersistent':
+                S_th = alpha * G * Math.exp(-2 * alpha * T_sec) / (1 - Math.exp(-alpha * G) + alpha);
+                break;
+            case 'unslotted-1-persistent':
+                S_th = (G * Math.exp(-G * (alpha * 2 + 1)) * (1 + G + alpha * G * (1 + G + 0.5 * alpha * G))) / ((G * (1 + 2 * alpha)) - (1 - Math.exp(-alpha * G)) + ((1 + alpha * G) * Math.exp(-G * (1 + alpha))));
+                break;
+            case 'slotted-1-persistent':
+                S_th = (G * (1 + alpha - Math.exp(-alpha * G)) * Math.exp(-G * (1 + alpha))) / ((1 + alpha) * (1 - Math.exp(-alpha * G) + (alpha * Math.exp(-G * (1 + alpha)))));
+                break;
+            default:
+                console.error('Invalid CSMA selection.');
+                S_th = 0;
+                break;
+        }
+
+        // Display results
+        var throughputResultElement = document.getElementById('throughput-result');
+        if (throughputResultElement) {
+            // Adjust display logic for small non-zero values
+            if (Math.abs(S_th) < 0.01) {
+                throughputResultElement.innerHTML = `<p>Throughput: < 0.01 bps</p>`;
+            } else {
+                throughputResultElement.innerHTML = `<p>Throughput: ${S_th.toFixed(4)} bps</p>`;
+            }
+        } else {
+            console.error('Element with ID "throughput-result" not found.');
+        }
+    }
+
+   
 
     // Attach calculateParameters function to the Calculate button click event
     var calculateButton = document.querySelector('#calculator-form button[type="button"]');
@@ -39,51 +133,173 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Calculate button not found.');
     }
 
-    // Function to calculate OFDM Parameters
-    function calculateOFDMParameters() {
-        // Fetch input values
-        var bw = parseFloat(document.getElementById('ofdm-bandwidth').value.trim());
-        var df = parseFloat(document.getElementById('subcarrier-spacing').value.trim());
-        var N = parseInt(document.getElementById('number-of-symbols').value.trim());
-        var T_rb = parseFloat(document.getElementById('resource-block-duration').value.trim()) / 1000; // Convert ms to s;
-        var B = parseInt(document.getElementById('modulated-bits').value.trim());
-        var n = parseInt(document.getElementById('number-of-parallel-blocks').value.trim());
-
-        // Perform calculations
-        var bitsPerResourceElement =  Math.log2(B); // assuming 1024-QAM as per your example
-        var bitsPerOFDMSymbol = (bw/df) * bitsPerResourceElement;
-        var bitsPerResourceBlock = bitsPerOFDMSymbol * N; // convert ms to s
-        var maxTransmissionRate =( n * bitsPerResourceBlock)/T_rb;
-
-        // Display results
-        var resultElement = document.getElementById('ofdm-result'); // Assuming you want to display in this element
-        if (resultElement) {
-            resultElement.innerHTML = `
-                <h3>OFDM Calculated Parameters:</h3>
-                <p>Bits Per Resource Element: ${bitsPerResourceElement.toFixed(2)}</p>
-                <p>Bits Per OFDM Symbol: ${bitsPerOFDMSymbol.toFixed(2)}</p>
-                <p>Bits Per Resource Block: ${bitsPerResourceBlock.toFixed(2)}</p>
-                <p>Max Transmission Rate: ${maxTransmissionRate.toFixed(2)}</p>
-            `;
-        } else {
-            console.error('Element with ID "ofdm-result" not found.');
-        }
+    // Attach calculateOFDMParameters function to the Calculate button click event
+    var calculateOFDMButton = document.querySelector('section.card:nth-of-type(2) button[type="button"]');
+    if (calculateOFDMButton) {
+        calculateOFDMButton.addEventListener('click', calculateOFDMParameters);
+    } else {
+        console.error('OFDM Calculate button not found.');
     }
-    function toggleMATParameters() {
-        var selection = document.getElementById('mat-selection').value;
-        var matParameters = document.getElementById('mat-parameters').children;
 
-        // Hide all MAT parameter groups
-        for (var i = 0; i < matParameters.length; i++) {
-            matParameters[i].style.display = 'none';
+    // Attach calculateThroughput function to the Calculate button click event
+    var calculateThroughputButton = document.querySelector('section.card:nth-of-type(4) button[type="button"]');
+    if (calculateThroughputButton) {
+        calculateThroughputButton.addEventListener('click', calculateThroughput);
+    } else {
+        console.error('Throughput Calculate button not found.');
+    }
+
+  
+
+    // Attach toggleMATParameters function to the selection change event
+    var matSelection = document.getElementById('mat-selection');
+    if (matSelection) {
+        matSelection.addEventListener('change', toggleMATParameters);
+    } else {
+        console.error('MAT selection dropdown not found.');
+    }
+    const calculatePower = () => {
+        const bpskQpskMap = {
+            "1.0e-0": 0.0,
+            "1.0e-1": 0.0,
+            "1.0e-2": 4.0,
+            "1.0e-3": 7.0,
+            "1.0e-4": 8.0,
+            "1.0e-5": 9.7,
+            "1.0e-6": 10.7,
+            "1.0e-7": 11.5,
+            "1.0e-8": 12.0
+        };
+
+        const eightPskMap = {
+            "1.0e-0": 0.0,
+            "1.0e-1": 0.0,
+            "1.0e-2": 7.0,
+            "1.0e-3": 10.0,
+            "1.0e-4": 12.0,
+            "1.0e-5": 13.0,
+            "1.0e-6": 14.0,
+            "1.0e-7": 14.5,
+            "1.0e-8": 15.0
+        };
+
+        const sixteenPskMap = {
+            "1.0e-0": 0.0,
+            "1.0e-1": 4.0,
+            "1.0e-2": 11.0,
+            "1.0e-3": 14.5,
+            "1.0e-4": 16.0,
+            "1.0e-5": 17.0,
+            "1.0e-6": 18.0,
+            "1.0e-7": 19.0,
+            "1.0e-8": 20.0
+        };
+
+        const getConvertedValue = (inputId, unitId) => {
+            const value = parseFloat(document.getElementById(inputId).value);
+            const unit = document.getElementById(unitId).value;
+            if (isNaN(value)) {
+                alert('Please enter a valid number');
+                return null;
+            }
+            if (unit === 'unitless') {
+                return unitlessToDbConverter(value);
+            }
+            return value;
+        };
+
+        const unitlessToDbConverter = value => {
+            if (value <= 0) {
+                throw new Error('Value must be greater than 0');
+            }
+            return 10 * Math.log10(value);
+        };
+
+        const findClosestEbNo = (ber, map) => {
+            let closestKey = null;
+            let minDifference = Number.MAX_VALUE;
+            for (const key in map) {
+                const difference = Math.abs(parseFloat(key) - ber);
+                if (difference < minDifference) {
+                    minDifference = difference;
+                    closestKey = key;
+                }
+            }
+            return map[closestKey];
+        };
+
+        const modulationType = document.getElementById('spinnerModulation').value;
+        const ber = parseFloat(document.getElementById('editTextBER').value);
+
+        if (isNaN(ber)) {
+            alert('Please enter a valid BER value');
+            return;
         }
 
-        // Show selected MAT parameter group
-        document.getElementById(selection).style.display = 'block';
+        const M = getConvertedValue('editTextM', 'spinnerM');
+        const Temp = getConvertedValue('editTextTemp', 'spinnerTemp');
+        const Nf = getConvertedValue('editTextNf', 'spinnerNf');
+        const Rate = getConvertedValue('editTextR', 'spinnerR');
+        const LP = getConvertedValue('editTextLP', 'spinnerLP');
+        const LfMargin = getConvertedValue('editTextLfMargin', 'spinnerLfMargin');
+        const Lf = getConvertedValue('editTextLf', 'spinnerLf');
+        const Other = getConvertedValue('editTextOther', 'spinnerOther');
+        const Gt = getConvertedValue('editTextGt', 'spinnerGt');
+        const Gr = getConvertedValue('editTextGr', 'spinnerGr');
+        const Ar = getConvertedValue('editTextAr', 'spinnerAr');
+        const At = getConvertedValue('editTextAt', 'spinnerAt');
 
-        // Hide other unnecessary MAT parameter groups
-        var otherOptions = Array.from(matParameters).filter(param => param.id !== selection);
-        otherOptions.forEach(option => option.style.display = 'none');
+
+        if ([M, Temp, Nf, Rate, LP, LfMargin, Lf, Other, Gt, Gr, Ar].includes(null)) {
+            alert('Please ensure all values are entered');
+            return;
+        }
+
+        let selectedMap;
+        switch (modulationType) {
+            case 'bpsk-qpsk':
+                selectedMap = bpskQpskMap;
+                break;
+            case '8psk':
+                selectedMap = eightPskMap;
+                break;
+            case '16psk':
+                selectedMap = sixteenPskMap;
+                break;
+            default:
+                alert('Invalid modulation type selected');
+                return;
+        }
+
+        const EbOverNo = findClosestEbNo(ber, selectedMap);
+        const powerR = M - 228.6 + Temp + Nf + Rate + EbOverNo;
+        const powerT = powerR + LP + LfMargin + Lf + Other - Gt - Gr - Ar+ At;
+
+        document.getElementById('textViewResult').innerText = `Power Transmitted in dB: ${powerT.toFixed(2)} dB`;
+    };
+
+    window.calculatePower = calculatePower;
+    var calculateButton = document.querySelector('#calculator-form button[type="button"]');
+    if (calculateButton) {
+        calculateButton.addEventListener('click', calculateParameters);
+    } else {
+        console.error('Calculate button not found.');
+    }
+
+    // Attach calculateOFDMParameters function to the Calculate button click event
+    var calculateOFDMButton = document.querySelector('section.card:nth-of-type(2) button[type="button"]');
+    if (calculateOFDMButton) {
+        calculateOFDMButton.addEventListener('click', calculateOFDMParameters);
+    } else {
+        console.error('OFDM Calculate button not found.');
+    }
+
+    // Attach calculateThroughput function to the Calculate button click event
+    var calculateThroughputButton = document.querySelector('section.card:nth-of-type(3) button[type="button"]');
+    if (calculateThroughputButton) {
+        calculateThroughputButton.addEventListener('click', calculateThroughput);
+    } else {
+        console.error('Throughput Calculate button not found.');
     }
 
     // Attach toggleMATParameters function to the selection change event
@@ -93,92 +309,94 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('MAT selection dropdown not found.');
     }
-     // Function to calculate Unslotted Nonpersistent CSMA throughput
-function calculateUnslottedNonpersistent(trafficLoad, propagationDelay, packetTransmissionTime) {
-    var alpha = trafficLoad * packetTransmissionTime;
-    var T = propagationDelay * packetTransmissionTime;
-    var G = Math.exp(-alpha);
-
-    return (G * Math.exp(-2 * alpha * T) * G * (1 + 2 * alpha) + Math.exp(-alpha * G)) / (1 + 2 * alpha);
-}
-
-// Function to calculate Slotted Nonpersistent CSMA throughput
-function calculateSlottedNonpersistent(trafficLoad, propagationDelay, packetTransmissionTime) {
-    var alpha = trafficLoad * packetTransmissionTime;
-    var T = propagationDelay * packetTransmissionTime;
-    var G = Math.exp(-alpha);
-
-    return (alpha * G * Math.exp(-2 * alpha * T) * (1 - Math.exp(-alpha * G) + alpha)) / (1 + 2 * alpha);
-}
-
-// Function to calculate Unslotted 1-Persistent CSMA throughput
-function calculateUnslotted1Persistent(trafficLoad, propagationDelay) {
-    var alpha = trafficLoad * propagationDelay;
-    var G = Math.exp(-propagationDelay * (1 + 2 * alpha));
-    
-    return (G * (1 + G + alpha * G * (1 + G + alpha * Math.pow(G, 2))) * Math.exp(-propagationDelay * (1 + 2 * alpha))) / 
-           (G * (1 + 2 * alpha) - (1 - Math.exp(-alpha * G)) + (1 + alpha * G) * Math.exp(-propagationDelay * (1 + alpha)));
-}
-
-// Function to calculate Slotted 1-Persistent CSMA throughput
-function calculateSlotted1Persistent(trafficLoad, propagationDelay) {
-    var alpha = trafficLoad * propagationDelay;
-    var G = Math.exp(-propagationDelay * (1 + alpha));
-    
-    return (G * (1 + alpha - Math.exp(-Math.pow(G, 2))) * Math.exp(-propagationDelay * (1 + alpha))) / 
-           ((1 + alpha) * (1 - Math.exp(-alpha * G)) + alpha * Math.exp(-propagationDelay * (1 + alpha)));
-}
-
-// Function to calculate throughput based on selected MAT
-function calculateThroughput() {
-    var selection = document.getElementById('mat-selection').value;
-    var throughput;
-
-    switch (selection) {
-        case 'unslotted-nonpersistent':
-            var trafficLoadUNP = parseFloat(document.getElementById('traffic-load-unslotted').value.trim());
-            var propagationDelayUNP = parseFloat(document.getElementById('normalized-propagation-delay-unslotted').value.trim());
-            var packetTransmissionTimeUNP = parseFloat(document.getElementById('packet-transmission-time-unslotted').value.trim());
-
-            throughput = calculateUnslottedNonpersistent(trafficLoadUNP, propagationDelayUNP, packetTransmissionTimeUNP);
-            break;
-
-        case 'slotted-nonpersistent':
-            var trafficLoadSNP = parseFloat(document.getElementById('traffic-load-slotted').value.trim());
-            var propagationDelaySNP = parseFloat(document.getElementById('normalized-propagation-delay-slotted').value.trim());
-            var packetTransmissionTimeSNP = parseFloat(document.getElementById('packet-transmission-time-slotted').value.trim());
-
-            throughput = calculateSlottedNonpersistent(trafficLoadSNP, propagationDelaySNP, packetTransmissionTimeSNP);
-            break;
-
-        case 'unslotted-1-persistent':
-            var trafficLoad1P = parseFloat(document.getElementById('traffic-load-1-persistent').value.trim());
-            var propagationDelay1P = parseFloat(document.getElementById('normalized-propagation-delay-1-persistent').value.trim());
-
-            throughput = calculateUnslotted1Persistent(trafficLoad1P, propagationDelay1P);
-            break;
-
-        case 'slotted-1-persistent':
-            var trafficLoadS1P = parseFloat(document.getElementById('traffic-load-slotted-1-persistent').value.trim());
-            var propagationDelayS1P = parseFloat(document.getElementById('normalized-propagation-delay-slotted-1-persistent').value.trim());
-
-            throughput = calculateSlotted1Persistent(trafficLoadS1P, propagationDelayS1P);
-            break;
-
-        default:
-            console.error('Invalid selection.');
-            return;
-    }
-
-    // Display throughput result
-    document.getElementById('throughput-result').innerHTML = `<p>Throughput: ${throughput.toFixed(2)} bps</p>`;
-}
-
-    // Attach calculateOFDMParameters function to the Calculate button click event
-    var calculateOFDMButton = document.querySelector('section.card:nth-of-type(2) button[type="button"]');
-    if (calculateOFDMButton) {
-        calculateOFDMButton.addEventListener('click', calculateOFDMParameters);
-    } else {
-        console.error('OFDM Calculate button not found.');
-    }
 });
+
+function calculateCellularSystem() {
+    // Retrieve input values
+    const timeslotsPerCarrier = parseFloat(document.getElementById("timeslots-per-carrier").value);
+    const cityArea = parseFloat(document.getElementById("city-area").value);
+    const users = parseFloat(document.getElementById("number-of-users").value);
+    const callsPerDay = parseFloat(document.getElementById("calls-per-day").value);
+    const callDuration = parseFloat(document.getElementById("call-duration").value);
+    const callDropProbability = parseFloat(document.getElementById("call-drop-probability").value);
+    const sir = parseFloat(document.getElementById("sir").value);
+    const referenceDistance = parseFloat(document.getElementById("reference-distance").value);
+    const powerAtReference = parseFloat(document.getElementById("power-reference-distance").value);
+    const pathLossExponent = parseFloat(document.getElementById("path-loss-exponent").value);
+    const receiverSensitivity = parseFloat(document.getElementById("receiver-sensitivity").value);
+
+    // Calculate intermediate values
+    const powerAtReferenceWatt = Math.pow(10, powerAtReference/10);
+    const maxDistance = referenceDistance / (Math.pow(((receiverSensitivity * Math.pow(10,-6))/ powerAtReferenceWatt ),1/pathLossExponent));
+    const maxCellSize = (3/2) * Math.sqrt(3) * Math.pow(maxDistance,2); 
+    const numberOfCells = Math.ceil(cityArea / maxCellSize);
+
+    const trafficLoadPerUser = (callsPerDay / (24 * 60)) * callDuration;
+    const trafficLoadWholeSys = trafficLoadPerUser * users;
+    const trafficLoadEachCell = trafficLoadWholeSys / numberOfCells;
+    const sirNoUnit = Math.pow(10, sir/10);
+    const clusterSize = Math.pow((6*sirNoUnit),(2/pathLossExponent)) / 3;
+    
+    let N = [1, 3, 4, 7, 9, 12, 13, 16, 19, 21, 28];
+
+    // Find the closest larger value in N array
+    let closestValue = N[0];
+    for (let i = 0; i < N.length; i++) {
+        if (clusterSize <= N[i]) {
+            closestValue = N[i];
+            break;
+        }
+    }
+
+    const numOfChannels = calculateN(trafficLoadEachCell, callDropProbability);
+
+    // Display results
+    document.getElementById("cellular-system-result").innerHTML = `
+        <p>Maximum distance between transmitter and receiver for reliable communication: ${maxDistance.toFixed(2)} meters</p>
+        <p>Maximum cell size assuming hexagonal cells: ${maxCellSize.toFixed(2)} km²</p>
+        <p>The number of cells in the service area: ${numberOfCells}</p>
+        <p>Traffic load in the whole cellular system: ${trafficLoadWholeSys.toFixed(2)} Erlangs</p>
+        <p>Traffic load in each cell: ${trafficLoadEachCell.toFixed(2)} Erlangs</p>
+        <p>Number of cells in each cluster: ${closestValue}</p>
+        <p>Number of channels: ${numOfChannels}</p>
+    `;
+}
+
+function factorial(n) {
+    return n ? n * factorial(n - 1) : 1;
+}
+
+function erlangB(N, A) {
+    let numerator = Math.pow(A, N) / factorial(N);
+    let denominator = 0;
+    for (let i = 0; i <= N; i++) {
+        denominator += Math.pow(A, i) / factorial(i);
+    }
+    return numerator / denominator;
+}
+
+function calculateN(trafficLoadEachCell, callDropProbability) {
+    let N = 0;
+    const A = trafficLoadEachCell;
+    const B = callDropProbability;
+
+    if (isNaN(B) || isNaN(A) || B <= 0 || B >= 1 || A <= 0) {
+        console.error("Invalid input values for probability (0 < probability < 1) and Traffic > 0");
+        return "Invalid input values";
+    }
+
+    while (true) {
+        let calculatedB = erlangB(N, A);
+        if (calculatedB <= B) {
+            return N;
+        }
+        N++;
+        if (N > 1000) {
+            console.error("Calculation did not converge. Try with different values of B and A.");
+            return "Calculation did not converge";
+        }
+    }
+}
+
+    
+
