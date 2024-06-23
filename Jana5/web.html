@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communication System Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://cdn-icons-png.freepik.com/512/8468/8468896.png?ga=GA1.1.307243719.1718747295" alt="Wireless Icon" class="large-icon">
+            <h1>Communication <span class="colorful-text">System Calculator</span></h1>
+        </div>
+        <form id="calculator-form">
+            <!-- Sampler, Quantizer, Encoder Section -->
+            <section class="card">
+                <h2>Sampler, Quantizer, Encoder</h2>
+                <div class="input-group">
+                    <label for="bandwidth">Bandwidth:</label>
+                    <input type="number" id="bandwidth" required>
+                </div>
+                <div class="input-group">
+                    <label for="number-of-bits">Number of Bits:</label>
+                    <input type="number" id="number-of-bits" required>
+                </div>
+                <div class="input-group">
+                    <label for="compression-rate">Compression Rate:</label>
+                    <input type="number" id="compression-rate" required>
+                </div>
+                <div class="input-group">
+                    <label for="channel-encoder-rate">Channel Encoder Rate:</label>
+                    <input type="number" id="channel-encoder-rate" required>
+                </div>
+                <div class="input-group">
+                    <label for="interleaver-bits">Interleaver Bits:</label>
+                    <input type="number" id="interleaver-bits" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateParameters()">Calculate</button>
+            </section>
+            
+            <!-- OFDM Section -->
+            <section class="card">
+                <h2>OFDM Parameters</h2>
+                <div class="input-group">
+                    <label for="ofdm-bandwidth">Bandwidth (BW):</label>
+                    <input type="number" id="ofdm-bandwidth" required>
+                </div>
+                <div class="input-group">
+                    <label for="subcarrier-spacing">Subcarrier Spacing (Δf):</label>
+                    <input type="number" id="subcarrier-spacing" required>
+                </div>
+                <div class="input-group">
+                    <label for="number-of-symbols">Number of OFDM Symbols (N):</label>
+                    <input type="number" id="number-of-symbols" required>
+                </div>
+                <div class="input-group">
+                    <label for="resource-block-duration">Resource Block Duration (T_rb) [ms]:</label>
+                    <input type="number" id="resource-block-duration" required>
+                </div>
+                <div class="input-group">
+                    <label for="modulated-bits">Modulated Bits per Subcarrier (B):</label>
+                    <input type="number" id="modulated-bits" required>
+                </div>
+                <div class="input-group">
+                    <label for="number-of-parallel-blocks">Number of Parallel Resource Blocks (n):</label>
+                    <input type="number" id="number-of-parallel-blocks" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateOFDMParameters()">Calculate</button>
+            </section>
+            
+            <!-- Power Calculation Section -->
+            <section class="card">
+                <h2>Power Calculation</h2>
+                <div class="input-group">
+                    <label for="path-loss">Path Loss:</label>
+                    <input type="number" id="path-loss" required>
+                    <select id="path-loss-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="frequency">Frequency (Hz):</label>
+                    <input type="number" id="frequency" required>
+                </div>
+                <div class="input-group">
+                    <label for="transmit-antenna-gain">Transmit Antenna Gain:</label>
+                    <input type="number" id="transmit-antenna-gain" required>
+                    <select id="transmit-antenna-gain-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="receive-antenna-gain">Receive Antenna Gain:</label>
+                    <input type="number" id="receive-antenna-gain" required>
+                    <select id="receive-antenna-gain-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="data-rate">Data Rate (bps):</label>
+                    <input type="number" id="data-rate" required>
+                </div>
+                <div class="input-group">
+                    <label for="antenna-transmitted">Antenna Transmitted:</label>
+                    <input type="number" id="antenna-transmitted" required>
+                    <select id="antenna-transmitted-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="antenna-feed-line-loss">Antenna Feed Line Loss:</label>
+                    <input type="number" id="antenna-feed-line-loss" required>
+                    <select id="antenna-feed-line-loss-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="other-loss">Other Loss:</label>
+                    <input type="number" id="other-loss" required>
+                    <select id="other-loss-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="fade-margin">Fade Margin:</label>
+                    <input type="number" id="fade-margin" required>
+                    <select id="fade-margin-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="noise-figure">Noise Figure (dB):</label>
+                    <input type="number" id="noise-figure" required>
+                </div>
+                <div class="input-group">
+                    <label for="temperature">Temperature (K):</label>
+                    <input type="number" id="temperature" required>
+                </div>
+                <div class="input-group">
+                    <label for="link-margin">Link Margin:</label>
+                    <input type="number" id="link-margin" required>
+                    <select id="link-margin-unit">
+                        <option value="no-unit">No Unit</option>
+                        <option value="db">dB</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="number-of-psk">Number of PSK:</label>
+                    <input type="number" id="number-of-psk" required>
+                </div>
+                <div class="input-group">
+                    <label for="max-bit-error-rate">Maximum Bit Error Rate:</label>
+                    <input type="number" id="max-bit-error-rate" required>
+                </div>
+                <button type="button" class="btn" onclick="calculatePower()">Calculate</button>
+            </section>
+            
+            <!-- Throughput Calculation Section -->
+            <section class="card">
+                <h2>Throughput Calculation</h2>
+                <div class="input-group">
+                    <label for="csma-selection">CSMA Technique:</label>
+                    <select id="csma-selection">
+                        <option value="unslotted-nonpersistent">Unslotted Nonpersistent CSMA</option>
+                        <option value="slotted-nonpersistent">Slotted Nonpersistent CSMA</option>
+                        <option value="unslotted-1-persistent">Unslotted 1-Persistent CSMA</option>
+                        <option value="slotted-1-persistent">Slotted 1-Persistent CSMA</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="g">Frame Rate (g):</label>
+                    <input type="number" id="g" required>
+                </div>
+                <div class="input-group">
+                    <label for="data-transmission-bandwidth">Data Transmission Bandwidth:</label>
+                    <input type="number" id="data-transmission-bandwidth" required>
+                </div>
+                <div class="input-group">
+                    <label for="frame-size">Frame Size:</label>
+                    <input type="number" id="frame-size" required>
+                </div>
+                <div class="input-group">
+                    <label for="T">Maximum Signal Propagation (T):</label>
+                    <input type="number" id="T" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateThroughput()">Calculate</button>
+            </section>
+            
+            <!-- Cellular System Design Section -->
+            <section class="card">
+                <h2>Cellular System Design</h2>
+                <div class="input-group">
+                    <label for="cell-radius">Cell Radius (km):</label>
+                    <input type="number" id="cell-radius" required>
+                </div>
+                <div class="input-group">
+                    <label for="timeslots-per-carrier">Number of timeslots per Carrier:</label>
+                    <input type="number" id="timeslots-per-carrier" required>
+                </div>
+                <div class="input-group">
+                    <label for="city-area">City Area (km²):</label>
+                    <input type="number" id="city-area" required>
+                </div>
+                <div class="input-group">
+                    <label for="number-of-users">Number of users:</label>
+                    <input type="number" id="number-of-users" required>
+                </div>
+                <div class="input-group">
+                    <label for="calls-per-day">Number of calls per Day:</label>
+                    <input type="number" id="calls-per-day" required>
+                </div>
+                <div class="input-group">
+                    <label for="call-duration">Each call Duration (minutes):</label>
+                    <input type="number" id="call-duration" required>
+                </div>
+                <div class="input-group">
+                    <label for="call-drop-probability">Call Drop probability (%):</label>
+                    <input type="number" id="call-drop-probability" required>
+                </div>
+                <div class="input-group">
+                    <label for="sir">Signal-to-Interference Ratio (SIR):</label>
+                    <input type="number" id="sir" required>
+                </div>
+                <div class="input-group">
+                    <label for="reference-distance">Reference distance (m):</label>
+                    <input type="number" id="reference-distance" required>
+                </div>
+                <div class="input-group">
+                    <label for="power-reference-distance">Power at Reference distance (dBm):</label>
+                    <input type="number" id="power-reference-distance" required>
+                </div>
+                <div class="input-group">
+                    <label for="path-loss-exponent">Path loss exponent:</label>
+                    <input type="number" id="path-loss-exponent" required>
+                </div>
+                <div class="input-group">
+                    <label for="receiver-sensitivity">Receiver Sensitivity (dBm):</label>
+                    <input type="number" id="receiver-sensitivity" required>
+                </div>
+                <button type="button" class="btn" onclick="calculateCellularSystem()">Calculate</button>
+            </section>
+        </form>
+        
+        <!-- Result Display Section -->
+        <div id="results">
+            <h2>Results</h2>
+            <div id="sampler-quantizer-result"></div>
+            <div id="ofdm-result"></div>
+            <div id="throughput-result"></div>
+            <div id="cellular-system-result"></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
