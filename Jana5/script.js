@@ -100,49 +100,32 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function calculateCellularSystem() {
-    // Get input values
-    const cellRadius = parseFloat(document.getElementById('cell-radius').value);
-    const timeslotsPerCarrier = parseInt(document.getElementById('timeslots-per-carrier').value);
-    const cityArea = parseFloat(document.getElementById('city-area').value);
-    const numberOfUsers = parseInt(document.getElementById('number-of-users').value);
-    const callsPerDay = parseInt(document.getElementById('calls-per-day').value);
-    const callDuration = parseFloat(document.getElementById('call-duration').value);
-    const callDropProbability = parseFloat(document.getElementById('call-drop-probability').value);
-    const sir = parseFloat(document.getElementById('sir').value);
-    const referenceDistance = parseFloat(document.getElementById('reference-distance').value);
-    const powerReferenceDistance = parseFloat(document.getElementById('power-reference-distance').value);
-    const pathLossExponent = parseFloat(document.getElementById('path-loss-exponent').value);
-    const receiverSensitivity = parseFloat(document.getElementById('receiver-sensitivity').value);
+    // Retrieve input values
+    const timeslotsPerCarrier = parseFloat(document.getElementById("timeslots-per-carrier").value);
+    const cityArea = parseFloat(document.getElementById("city-area").value);
+    const users = parseFloat(document.getElementById("number-of-users").value);
+    const callsPerDay = parseFloat(document.getElementById("calls-per-day").value);
+    const callDuration = parseFloat(document.getElementById("call-duration").value);
+    const callDropProbability = parseFloat(document.getElementById("call-drop-probability").value) / 100;
+    const sir = parseFloat(document.getElementById("sir").value);
+    const referenceDistance = parseFloat(document.getElementById("reference-distance").value);
+    const powerAtReference = parseFloat(document.getElementById("power-reference-distance").value);
+    const pathLossExponent = parseFloat(document.getElementById("path-loss-exponent").value);
+    const receiverSensitivity = parseFloat(document.getElementById("receiver-sensitivity").value);
 
-    // Convert power at reference distance from dBm to watts
-    const powerAtReferenceWatt = Math.pow(10, powerReferenceDistance / 10);
-
-    // Calculate maximum distance between transmitter and receiver for reliable communication
-    const maxDistance = referenceDistance / Math.pow(((receiverSensitivity * Math.pow(10, -6)) / powerAtReferenceWatt), 1 / pathLossExponent);
-
-    // Calculate maximum cell size assuming hexagonal cells
-    const maxCellSize = (3 / 2) * Math.sqrt(3) * Math.pow(maxDistance, 2);
-
-    // Calculate the number of cells in the service area
+    // Calculate intermediate values
+    const powerAtReferenceWatt = Math.pow(10, powerAtReference/10);
+    const maxDistance = referenceDistance / (Math.pow(((receiverSensitivity * Math.pow(10,-6))/ powerAtReferenceWatt ),1/pathLossExponent));
+    const maxCellSize = (3/2) * Math.sqrt(3) * Math.pow(maxDistance,2); 
     const numberOfCells = Math.ceil(cityArea / maxCellSize);
 
-    // Calculate the traffic load per user in Erlangs
     const trafficLoadPerUser = (callsPerDay / (24 * 60)) * callDuration;
-
-    // Calculate the traffic load in the whole cellular system in Erlangs
-    const trafficLoadWholeSys = trafficLoadPerUser * numberOfUsers;
-
-    // Calculate the traffic load in each cell in Erlangs
+    const trafficLoadWholeSys = trafficLoadPerUser * users;
     const trafficLoadEachCell = trafficLoadWholeSys / numberOfCells;
-
-    // Convert SIR from dB to unitless
-    const sirNoUnit = Math.pow(10, sir / 10);
-
-    // Calculate the cluster size
-    const clusterSize = Math.pow((6 * sirNoUnit), (2 / pathLossExponent)) / 3;
-
-    // Predefined cluster sizes
-    const N = [1, 3, 4, 7, 9, 12, 13, 16, 19, 21, 28];
+    const sirNoUnit = Math.pow(10, sir/10);
+    const clusterSize = Math.pow((6*sirNoUnit),(2/pathLossExponent)) / 3;
+    
+    let N = [1, 3, 4, 7, 9, 12, 13, 16, 19, 21, 28];
 
     // Find the closest larger value in N array
     let closestValue = N[0];
@@ -153,21 +136,17 @@ function calculateCellularSystem() {
         }
     }
 
-    // Calculate the number of channels required
     const numOfChannels = calculateN(trafficLoadEachCell, callDropProbability);
 
     // Display results
-    const resultsDiv = document.getElementById('cellular-system-result');
-    resultsDiv.innerHTML = `
-        <h3>Cellular System Design Results</h3>
-        <p>Maximum distance between transmitter and receiver: ${maxDistance.toFixed(2)} m</p>
-        <p>Maximum cell size: ${maxCellSize.toFixed(2)} km²</p>
-        <p>Number of cells in the service area: ${numberOfCells}</p>
+    document.getElementById("cellular-system-result").innerHTML = `
+        <p>Maximum distance between transmitter and receiver for reliable communication: ${maxDistance.toFixed(2)} meters</p>
+        <p>Maximum cell size assuming hexagonal cells: ${maxCellSize.toFixed(2)} km²</p>
+        <p>The number of cells in the service area: ${numberOfCells}</p>
         <p>Traffic load in the whole cellular system: ${trafficLoadWholeSys.toFixed(2)} Erlangs</p>
         <p>Traffic load in each cell: ${trafficLoadEachCell.toFixed(2)} Erlangs</p>
-        <p>Calculated cluster size: ${clusterSize.toFixed(2)}</p>
-        <p>Closest larger cluster size value: ${closestValue}</p>
-        <p>Number of channels required: ${numOfChannels}</p>
+        <p>Number of cells in each cluster: ${closestValue}</p>
+        <p>Number of channels: ${numOfChannels}</p>
     `;
 }
 
